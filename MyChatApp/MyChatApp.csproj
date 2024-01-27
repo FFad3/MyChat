@@ -8,9 +8,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="MVVM\Models\" />
-    <Folder Include="MVVM\ViewModels\" />
-	<Folder Include="MVVM\Views\"/>
+    <None Remove="Fonts\Good Old DOS.ttf" />
+    <None Remove="Fonts\Minecraft.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Fonts\Good Old DOS.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Fonts\Minecraft.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Styles\" />
   </ItemGroup>
 
 </Project>

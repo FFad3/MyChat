@@ -2,8 +2,19 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:MyChatApp"
-             StartupUri="MVVM\Views\MainWindow.xaml">
+             StartupUri="MainWindow.xaml">
+
     <Application.Resources>
-        
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles/ButtonStyle.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!--window style-->
+            <Style TargetType="{x:Type Window}">
+                <Setter Property="FontFamily" Value="/Fonts/#Minecraft"/>
+            </Style>
+            <SolidColorBrush x:Key="{x:Static SystemColors.ControlTextBrushKey}" Color="#00C000"/>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>
