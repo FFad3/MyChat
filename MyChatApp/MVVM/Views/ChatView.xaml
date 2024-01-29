@@ -3,9 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:MyChatApp.MVVM.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             xmlns:local="clr-namespace:MyChatApp.MVVM.Views" 
+             xmlns:viewmodels="clr-namespace:MyChatApp.MVVM.ViewModels"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="800"
+             d:DataContext="{d:DesignInstance Type=viewmodels:ChatViewModel}"
+             >
     <UserControl.Resources>
         <TextBlock x:Key="watermark" Text="Write a message"/>
     </UserControl.Resources>
@@ -29,7 +32,46 @@
                        FontSize="30">@Username:</TextBlock>
             <TextBlock TextAlignment="Center" 
                        Foreground="#00C000"
-                       FontSize="40" TextWrapping="Wrap">Maciek2234</TextBlock>
+                       FontSize="40" TextWrapping="Wrap"
+                       Text="{Binding Username}"/>
+            <Button Content="Change" 
+                    Margin="0 0 0 30"
+                    Height="30"
+                    Click="BtnShowUsernameChangeForm_Click"/>
+            <Grid x:Name="UsernameChangeForm"
+                        Visibility="Visible">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="UserNameInput"
+                         Grid.Row="0" 
+                         Grid.ColumnSpan="2"
+                         Background="Black"
+                         BorderBrush="#00C000"
+                         HorizontalAlignment="Stretch" 
+                         TextAlignment="Center"
+                         Visibility="Visible"
+                         FontSize="25"
+                         Text="{Binding UsernameInput,UpdateSourceTrigger=PropertyChanged}"
+                         Margin="0 0 0 10"/>
+                
+                <Button Content="Confirm"
+                        Grid.Row="1" 
+                        Grid.Column="0"
+                        Margin="0 0 8 0"
+                        Command="{Binding SubmitUsernameChange}"/>
+                <Button Content="Cancel"
+                        Grid.Row="1" 
+                        Grid.Column="1"
+                        Margin="8 0 0 0"
+                        BorderBrush="Red"                           
+                        Command="{Binding CancellUsernameChange}"/>
+            </Grid>
         </StackPanel>
         
         <Grid Grid.Row="1" Grid.Column="1" Margin="10">
@@ -39,7 +81,8 @@
             </Grid.ColumnDefinitions>
 
             <Button Margin="0 0 8 0" Grid.Column="0" Content="Send"/>
-            <TextBox Grid.Column="1"
+            <TextBox x:Name="MessageInput"
+                     Grid.Column="1"
                      VerticalContentAlignment="Center"
                      Background="#202020"
                      FontSize="15"
