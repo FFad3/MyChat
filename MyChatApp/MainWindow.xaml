@@ -54,8 +54,14 @@
                     <Button x:Name="BtnClose" Content="X" Width="40" Height="40" Click="BtnClose_Click"/>
                 </StackPanel>
             </Grid>
-
-            <views:ChatView Grid.Row="1" DataContext="{Binding CurrentViewModel}"/>
+            <ContentControl Grid.Row="1" Content="{Binding CurrentViewModel}">
+                <ContentControl.Resources>
+                    <DataTemplate DataType="{x:Type viewmodels:ChatViewModel}">
+                        <views:ChatView/>
+                    </DataTemplate>
+                </ContentControl.Resources>
+            </ContentControl>
+            <!--<views:ChatView Grid.Row="1" DataContext="{Binding CurrentViewModel}"/>-->
         </Grid>
     </Border>
 </Window>

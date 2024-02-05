@@ -10,8 +10,9 @@
              d:DataContext="{d:DesignInstance Type=viewmodels:ChatViewModel}"
              >
     <UserControl.Resources>
-        <TextBlock x:Key="watermark" Text="Write a message"/>
+        <viewmodels:MultivalueConverter x:Key="multivalueConverter"></viewmodels:MultivalueConverter>
     </UserControl.Resources>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="5*"/>
@@ -22,15 +23,59 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.Column="1" Background="#202020" Foreground="#008000">hallo</TextBlock>
-        
+        <ListBox Name="messageListBox"
+                 HorizontalContentAlignment="Stretch"
+                 Grid.Row="0" Grid.Column="1" 
+                 Background="Transparent" 
+                 Foreground="#008000"
+                 BorderBrush="#00C000"
+                 ItemsSource="{Binding Messages}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="5 5 5 10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Margin="0 0 0 4" FontSize="14" Text="{Binding Sender}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="Yellow"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource multivalueConverter}">
+                                                    <Binding Path="Sender" />
+                                                    <Binding Path="DataContext.Username" RelativeSource="{RelativeSource AncestorType={x:Type ListBox}}" />
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="Foreground" Value="#00C000"/>
+                                        </DataTrigger>
+
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" FontSize="12" Text="{Binding Date,StringFormat=d}" />
+                        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" FontSize="14" Text="{Binding Content}" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
         <StackPanel Grid.Row="0" Grid.Column="0" Margin="10" 
                     VerticalAlignment="Center" 
-                    HorizontalAlignment="Center">
+                    HorizontalAlignment="Center"
+                    >
             <TextBlock TextAlignment="Center" 
                        Foreground="#00C000"
                        FontSize="30">@Username:</TextBlock>
-            <TextBlock TextAlignment="Center" 
+            <TextBlock x:Name="UsernameDisplay"
+                       TextAlignment="Center" 
                        Foreground="#00C000"
                        FontSize="40" TextWrapping="Wrap"
                        Text="{Binding Username}"/>
@@ -39,7 +84,7 @@
                     Height="30"
                     Click="BtnShowUsernameChangeForm_Click"/>
             <Grid x:Name="UsernameChangeForm"
-                        Visibility="Visible">
+                        Visibility="Hidden">
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
@@ -59,7 +104,7 @@
                          FontSize="25"
                          Text="{Binding UsernameInput,UpdateSourceTrigger=PropertyChanged}"
                          Margin="0 0 0 10"/>
-                
+
                 <Button Content="Confirm"
                         Grid.Row="1" 
                         Grid.Column="0"
@@ -73,7 +118,6 @@
                         Command="{Binding CancellUsernameChange}"/>
             </Grid>
         </StackPanel>
-        
         <Grid Grid.Row="1" Grid.Column="1" Margin="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="70"/>
@@ -81,13 +125,36 @@
             </Grid.ColumnDefinitions>
 
             <Button Margin="0 0 8 0" Grid.Column="0" Content="Send"/>
-            <TextBox x:Name="MessageInput"
-                     Grid.Column="1"
-                     VerticalContentAlignment="Center"
-                     Background="#202020"
-                     FontSize="15"
-                     Padding="10"
-                     />
+            <TextBox    
+                x:Name="MessageInput"
+                BorderBrush="#00C000"
+                Text=""
+                Grid.Column="1"
+                VerticalContentAlignment="Center"
+                Background="#202020"
+                FontSize="15"
+                Padding="10">
+            </TextBox>
+            <TextBlock
+                IsHitTestVisible="False"
+                Text="@Message"
+                FontSize="15"
+                Padding="10"
+                Foreground="#00C000"
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                >
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Text,ElementName=MessageInput}" Value="">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
         </Grid>
     </Grid>
 </UserControl>

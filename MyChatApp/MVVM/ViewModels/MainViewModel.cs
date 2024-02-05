@@ -1,14 +1,17 @@
-﻿using MyChatApp.MVVM.Models;
+﻿using MyChatApp.Stores;
 
 namespace MyChatApp.MVVM.ViewModels
 {
     internal class MainViewModel : ViewModelBase
     {
-        public ViewModelBase CurrentViewModel { get;}
+        private readonly NavigationStore _navigationStore;
+        private readonly CurrentUserStore _userStore;
+        public ViewModelBase CurrentViewModel => _navigationStore.CurrentViewModel;
 
-        public MainViewModel(User user)
+        public MainViewModel()
         {
-            CurrentViewModel = new ChatViewModel(user);
+            _userStore = new CurrentUserStore();
+            _navigationStore = new NavigationStore(new ChatViewModel(_userStore));
         }
     }
 }

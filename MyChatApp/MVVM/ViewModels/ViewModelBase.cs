@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace MyChatApp.MVVM.ViewModels
 {
-    internal abstract class ViewModelBase : INotifyPropertyChanged
+    public abstract class ViewModelBase : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
