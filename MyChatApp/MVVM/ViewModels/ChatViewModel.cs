@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows.Data;
+using System.Windows;
+using System.Windows.Media;
 using MyChatApp.MVVM.Core;
 using MyChatApp.MVVM.Models;
 using MyChatApp.Net;
@@ -12,18 +13,15 @@ namespace MyChatApp.MVVM.ViewModels
 {
     internal class ChatViewModel : ViewModelBase
     {
-        private readonly CurrentUserStore _user;
+        private readonly CurrentUserStore _userStore;
         private readonly Server _server;
-
-        private string _username;
 
         public string Username
         {
-            get { return _username; }
+            get { return _userStore.Username; }
             set
             {
-                _user.Username = value;
-                _username = value;
+                _userStore.Username = value;
                 OnPropertyChanged();
             }
         }
@@ -44,38 +42,65 @@ namespace MyChatApp.MVVM.ViewModels
         private ObservableCollection<Message> _messages { get; }
         public IEnumerable<Message> Messages => _messages.ToList();
 
+        public ObservableCollection<User> Users { get; } = new();
+
         #region commands
 
         public RelayCommand SubmitUsernameChange { get; }
 
         public RelayCommand CancellUsernameChange { get; }
 
-        //public RelayCommand ConnectToServer { get; }
+        public AsyncRelayCommand ConnectToServer { get; }
 
         #endregion commands
 
-        public ChatViewModel(CurrentUserStore user)
+        public ChatViewModel(NavigationStore navigationStore, CurrentUserStore userStore)
+            : base(navigationStore)
         {
             this._server = new Server();
+            this._server.ConnectedEvent += OnUserConnected;
+            this._server.DisconectedEvent += OnUserDisconected;
             this._messages = new ObservableCollection<Message>()
             {
-                new("User1","random message 1 from user1",DateTime.UtcNow),
-                new("User2","random message 2 from user2",DateTime.UtcNow),
-                new("User3","random message 3 from user3",DateTime.UtcNow),
-                new("User4","random message 4 from user4",DateTime.UtcNow),
-                new("User5","random message 5 from user5",DateTime.UtcNow),
+                new(new(Colors.Yellow),"User1","random message 1 from user1",DateTime.UtcNow),
+                new(new(Colors.Red),"User2","random message 2 from user2",DateTime.UtcNow),
             };
-            this._user = user;
-            this._username = user.Username;
-            this._usernameInput = user.Username;
-            this.SubmitUsernameChange = new RelayCommand(ChangeUsername, CanChangeUsername);
+            this._userStore = userStore;
+            this._usernameInput = userStore.Username;
+            this.SubmitUsernameChange = new RelayCommand(ChangeUsername, IsValidUserName);
             this.CancellUsernameChange = new RelayCommand(_ => this.UsernameInput = this.Username);
-            //this.ConnectToServer = new AsyncRelayCommand();
+            this.ConnectToServer = new AsyncRelayCommand(async (token) => await this._server.ConnectToServer(Username, token), IsValidUserName);
+        }
+
+        private void OnUserConnected(IEnumerable<User> users)
+        {
+            foreach (var user in users)
+            {
+                if (!this.Users.Contains(user))
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        this.Users.Add(user);
+                    });
+                }
+            }
+        }
+
+        private void OnUserDisconected(Guid userid)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var user = this.Users.FirstOrDefault(x => x.Id == userid);
+                if (user is not null)
+                {
+                    this.Users.Remove(user);
+                }
+            });
         }
 
         #region UserName
 
-        private bool CanChangeUsername()
+        private bool IsValidUserName()
         {
             return !string.IsNullOrEmpty(UsernameInput) && UsernameInput.Length is not < 4 and not > 10;
         }
@@ -86,25 +111,5 @@ namespace MyChatApp.MVVM.ViewModels
         }
 
         #endregion UserName
-    }
-
-    public class MultivalueConverter : IMultiValueConverter
-    {
-        public object Convert(object[] values, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (values.Count() >= 2)
-            {
-                if (string.Equals(values[0], values[1]))
-                    return false;
-                else return true;
-            }
-            else
-                return false;
-        }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, System.Globalization.CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

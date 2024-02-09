@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using MyChatApp.MVVM.ViewModels;
+using MyChatApp.Stores;
 
 namespace MyChatApp
 {
@@ -19,10 +20,15 @@ namespace MyChatApp
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            //init View
+            NavigationStore NavigationStore = new();
+            CurrentUserStore currentUserStore = new();
+            NavigationStore.CurrentViewModel = new ChatViewModel(NavigationStore, currentUserStore);
+
             //initialize main widow with new ViewModel
             MainWindow window = new()
             {
-                DataContext = new MainViewModel()
+                DataContext = new MainViewModel(NavigationStore)
             };
 
             window.Show();

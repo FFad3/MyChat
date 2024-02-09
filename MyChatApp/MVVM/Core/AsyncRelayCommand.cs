@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace MyChatApp.MVVM.Core
@@ -77,9 +78,9 @@ namespace MyChatApp.MVVM.Core
             {
                 Debug.WriteLine(ex);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw;
+                MessageBox.Show($"Exception occured - {e.Message}");
             }
         }
     }

@@ -1,15 +1,15 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿using MyChatApp.MVVM.Core;
+using MyChatApp.Stores;
 
 namespace MyChatApp.MVVM.ViewModels
 {
-    public abstract class ViewModelBase : INotifyPropertyChanged
+    internal abstract class ViewModelBase : ObservableObject
     {
-        public event PropertyChangedEventHandler? PropertyChanged;
+        protected readonly NavigationStore _navigationStore;
 
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = default!)
+        protected ViewModelBase(NavigationStore navigationStore)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            _navigationStore = navigationStore;
         }
     }
 }

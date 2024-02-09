@@ -1,17 +1,15 @@
-﻿using MyChatApp.Stores;
+﻿using System;
+using MyChatApp.Stores;
 
 namespace MyChatApp.MVVM.ViewModels
 {
     internal class MainViewModel : ViewModelBase
     {
-        private readonly NavigationStore _navigationStore;
-        private readonly CurrentUserStore _userStore;
-        public ViewModelBase CurrentViewModel => _navigationStore.CurrentViewModel;
+        public ViewModelBase CurrentViewModel => _navigationStore.CurrentViewModel
+            ?? throw new ArgumentNullException("unspecified view");
 
-        public MainViewModel()
+        public MainViewModel(NavigationStore navigationStore) : base(navigationStore)
         {
-            _userStore = new CurrentUserStore();
-            _navigationStore = new NavigationStore(new ChatViewModel(_userStore));
         }
     }
 }
