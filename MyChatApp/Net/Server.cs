@@ -28,7 +28,7 @@ namespace MyChatApp.Net
             _client = new TcpClient();
         }
 
-        public async Task ConnectToServer(string username, CancellationToken token = default)
+        public async Task ConnectToServerAsync(UserContext userContext, CancellationToken token = default)
         {
             if (!_client.Connected)
             {
@@ -36,14 +36,29 @@ namespace MyChatApp.Net
             }
             PacketBuilder packetBuilder = new();
             packetBuilder.WriteOpCode(0);
-            packetBuilder.WriteString(username);
+            var json = JsonSerializer.Serialize(userContext);
+            packetBuilder.WriteString(json);
             await _client.Client.SendAsync(packetBuilder.GetPacketBytes());
             _ = Task.Run(async () => await HandleCommunicationAsync(), token);
         }
 
-        public event Action<IEnumerable<User>>? ConnectedEvent;
+        public async Task SendMessageAsync(Message message, CancellationToken token = default)
+        {
+            if (!_client.Connected)
+            {
+                await _client.ConnectAsync(_address, _port, token);
+            }
+            PacketBuilder packetBuilder = new();
+            packetBuilder.WriteOpCode(3);
+            packetBuilder.WriteString(JsonSerializer.Serialize(message));
+            await _client.Client.SendAsync(packetBuilder.GetPacketBytes());
+        }
 
-        public event Action<Guid>? DisconectedEvent;
+        public event Action<IEnumerable<User>>? OnConnected;
+
+        public event Action<Guid>? OnDisconectedEvent;
+
+        public event Action<int, string?>? OnMessageRecived;
 
         private async Task HandleCommunicationAsync()
         {
@@ -51,26 +66,10 @@ namespace MyChatApp.Net
             {
                 while (_client.Connected)
                 {
-                    var opCode = (int?)reader.ReadByte();
+                    var opCode = reader.ReadByte();
                     var msg = await reader.ReadMessageAsync();
-                    bool isValid = (opCode is not null && !string.IsNullOrEmpty(msg));
-                    if (isValid)
-                    {
-                        switch (opCode)
-                        {
-                            case 1:
-                                var users = JsonSerializer.Deserialize<IEnumerable<User>>(msg);
-                                ConnectedEvent?.Invoke(users!);
-                                break;
 
-                            case 2:
-                                DisconectedEvent?.Invoke(new Guid(msg));
-                                break;
-
-                            default:
-                                break;
-                        }
-                    }
+                    OnMessageRecived?.Invoke(opCode, msg);
                 }
             }
         }

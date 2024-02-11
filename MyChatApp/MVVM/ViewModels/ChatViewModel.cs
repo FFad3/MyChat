@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.Json;
 using System.Windows;
 using System.Windows.Media;
 using MyChatApp.MVVM.Core;
@@ -26,6 +27,18 @@ namespace MyChatApp.MVVM.ViewModels
             }
         }
 
+        private string _message;
+
+        public string Message
+        {
+            get { return _message; }
+            set
+            {
+                _message = value;
+                OnPropertyChanged();
+            }
+        }
+
         private string _usernameInput;
 
         public string UsernameInput
@@ -39,9 +52,20 @@ namespace MyChatApp.MVVM.ViewModels
             }
         }
 
-        private ObservableCollection<Message> _messages { get; }
-        public IEnumerable<Message> Messages => _messages.ToList();
+        private string _userColor;
 
+        public string UserColor
+        {
+            get { return _userColor; }
+            set
+            {
+                _userColor = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private UserContext _UserContext => new(Username, _userColor);
+        public ObservableCollection<Message> Messages { get; } = new();
         public ObservableCollection<User> Users { get; } = new();
 
         #region commands
@@ -51,6 +75,7 @@ namespace MyChatApp.MVVM.ViewModels
         public RelayCommand CancellUsernameChange { get; }
 
         public AsyncRelayCommand ConnectToServer { get; }
+        public AsyncRelayCommand SendMessage { get; }
 
         #endregion commands
 
@@ -58,35 +83,64 @@ namespace MyChatApp.MVVM.ViewModels
             : base(navigationStore)
         {
             this._server = new Server();
-            this._server.ConnectedEvent += OnUserConnected;
-            this._server.DisconectedEvent += OnUserDisconected;
-            this._messages = new ObservableCollection<Message>()
-            {
-                new(new(Colors.Yellow),"User1","random message 1 from user1",DateTime.UtcNow),
-                new(new(Colors.Red),"User2","random message 2 from user2",DateTime.UtcNow),
-            };
+            this._server.OnMessageRecived += OnMessageRecived;
+            this._message = string.Empty;
             this._userStore = userStore;
             this._usernameInput = userStore.Username;
+            this._userColor = GenerateRandomColorAsString();
             this.SubmitUsernameChange = new RelayCommand(ChangeUsername, IsValidUserName);
             this.CancellUsernameChange = new RelayCommand(_ => this.UsernameInput = this.Username);
-            this.ConnectToServer = new AsyncRelayCommand(async (token) => await this._server.ConnectToServer(Username, token), IsValidUserName);
+            this.ConnectToServer = new AsyncRelayCommand(async (token) => await this._server.ConnectToServerAsync(_UserContext, token), IsValidUserName);
+            this.SendMessage = new AsyncRelayCommand(async (token) =>
+            await this._server.SendMessageAsync(new(Username, Message, UserColor, DateTime.UtcNow), token));
         }
-
-        private void OnUserConnected(IEnumerable<User> users)
+        
+        private void OnMessageRecived(int opCode, string? content)
         {
-            foreach (var user in users)
+            switch (opCode)
             {
-                if (!this.Users.Contains(user))
-                {
-                    Application.Current.Dispatcher.Invoke(() =>
+                case 1:
+                    if (string.IsNullOrEmpty(content)) return;
+                    var users = JsonSerializer.Deserialize<IEnumerable<User>>(content) ?? new List<User>();
+                    UpdateUsers(users);
+                    break;
+
+                case 2:
+                    if (Guid.TryParse(content, out Guid val))
                     {
-                        this.Users.Add(user);
-                    });
-                }
+                        RemoveUser(val);
+                    }
+                    break;
+
+                case 3:
+                    if (string.IsNullOrEmpty(content)) return;
+                    var msg = JsonSerializer.Deserialize<Message>(content);
+                    if (msg is not null)
+                    {
+                        AddNewMessage(msg);
+                    }
+                    break;
+
+                default:
+                    break;
             }
         }
 
-        private void OnUserDisconected(Guid userid)
+        private void UpdateUsers(IEnumerable<User> users)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                foreach (var user in users)
+                {
+                    if (!this.Users.Contains(user))
+                    {
+                        this.Users.Add(user);
+                    }
+                }
+            });
+        }
+
+        private void RemoveUser(Guid userid)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
@@ -95,6 +149,14 @@ namespace MyChatApp.MVVM.ViewModels
                 {
                     this.Users.Remove(user);
                 }
+            });
+        }
+
+        private void AddNewMessage(Message message)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                this.Messages.Add(message);
             });
         }
 
@@ -111,5 +173,14 @@ namespace MyChatApp.MVVM.ViewModels
         }
 
         #endregion UserName
+
+        private static readonly Random random = new();
+
+        public static string GenerateRandomColorAsString()
+        {
+            byte[] rgb = new byte[3];
+            random.NextBytes(rgb);
+            return Color.FromArgb(255, rgb[0], rgb[1], rgb[2]).ToString();
+        }
     }
 }

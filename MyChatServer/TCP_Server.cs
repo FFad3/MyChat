@@ -78,29 +78,23 @@ namespace MyChatServer
                 Session session = _sessionManager.CreateSession(clientSocket);
                 await session.Start();
                 _sessionManager.AddSession(session);
-                //broadcast client join
-                //await BroadcastConneections();
             }
         }
 
-        private async void BroadcastConneections()
+        private void BroadcastConneections()
         {
             var sessions = _sessionManager.GetAll();
-            var jsonPayload = JsonSerializer.Serialize(sessions.Select(x => new { x.Id, x.Name }));
+            var jsonPayload = JsonSerializer.Serialize(sessions.Select(x => new { x.Id, x.Name, x.Color }));
 
             var broadCastPacket = new PacketBuilder();
             broadCastPacket.WriteOpCode(1);
             broadCastPacket.WriteString(jsonPayload);
             var packetBytes = broadCastPacket.GetPacketBytes();
 
-            var sendTasks = new List<Task>();
-
             foreach (var session in sessions)
             {
-                sendTasks.Add(session.ClientSocket.Client.SendAsync(packetBytes));
+                session.ClientSocket.Client.SendAsync(packetBytes);
             }
-
-            await Task.WhenAll(sendTasks);
         }
     }
 }

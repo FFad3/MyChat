@@ -1,4 +1,5 @@
 ﻿using System.Net.Sockets;
+using System.Text.Json;
 
 namespace MyChatServer
 {
@@ -6,6 +7,7 @@ namespace MyChatServer
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
         public TcpClient ClientSocket { get; set; }
         private bool IsRunning = false;
         private readonly SessionManager _sessionManager;
@@ -24,18 +26,21 @@ namespace MyChatServer
             IsRunning = true;
 
             int opCode = _packetReader.ReadByte();
-            string username = await _packetReader.ReadMessageAsync();
+            string json = await _packetReader.ReadMessageAsync();
+            UserContext? context = JsonSerializer.Deserialize<UserContext>(json);
+
             if (opCode == 0)
             {
-                await Console.Out.WriteLineAsync($"[{opCode}] User: {username} connected");
-                this.Name = username;
+                await Console.Out.WriteLineAsync($"[{opCode}] User: {context?.Username} connected");
+                this.Name = context?.Username ?? "UNKNOWN";
+                this.Color = context?.Color ?? "#FF0000";
             }
 
             _ = Task.Run(async () => await HandleCommunicationAsync());
         }
 
         private async Task HandleCommunicationAsync()
-        {         
+        {
             try
             {
                 PacketReader reader = new(ClientSocket.GetStream());
@@ -49,7 +54,17 @@ namespace MyChatServer
 
                         var opCode = reader.ReadByte();
                         var msg = await reader.ReadMessageAsync();
-                        await Console.Out.WriteLineAsync($"[{opCode}] {msg}");
+
+                        var sessions = _sessionManager.GetAll();
+                        var broadCastPacket = new PacketBuilder();
+                        broadCastPacket.WriteOpCode(opCode);
+                        broadCastPacket.WriteString(msg ?? string.Empty);
+
+                        var packetBytes = broadCastPacket.GetPacketBytes();
+                        foreach (var session in sessions)
+                        {
+                            await session.ClientSocket.Client.SendAsync(packetBytes);
+                        }
                     }
                 }
             }

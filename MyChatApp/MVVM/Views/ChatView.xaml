@@ -15,7 +15,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="300" />
             <ColumnDefinition />
-            <ColumnDefinition  Width="100"/>
+            <ColumnDefinition  Width="100" />
         </Grid.ColumnDefinitions>
 
         <ListBox Name="messageListBox"
@@ -52,7 +52,7 @@
          ItemsSource="{Binding Users}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Name}"/>
+                    <TextBlock Foreground="{Binding Color}" Text="{Binding Name}" />
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
@@ -61,11 +61,11 @@
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center">
             <TextBlock TextAlignment="Center"
-                       Foreground="#00C000"
+                       Foreground="{Binding UserColor}"
                        FontSize="30">@Username:</TextBlock>
             <TextBlock x:Name="UsernameDisplay"
                        TextAlignment="Center"
-                       Foreground="#00C000"
+                       Foreground="{Binding UserColor}"
                        FontSize="40" TextWrapping="Wrap"
                        Text="{Binding Username}" />
             <Button Content="Change"
@@ -99,9 +99,9 @@
                         Grid.Row="1"
                         Grid.Column="0"
                         Margin="0 0 8 0"
-                        Command="{Binding SubmitUsernameChange}" 
-                        Click="BtnShowUsernameChangeForm_Click"/>
-                <Button 
+                        Command="{Binding SubmitUsernameChange}"
+                        Click="BtnShowUsernameChangeForm_Click" />
+                <Button
                         x:Name="Cancel_Btn"
                         Content="Cancel"
                         Grid.Row="1"
@@ -109,14 +109,13 @@
                         Margin="8 0 0 0"
                         BorderBrush="Red"
                         Command="{Binding CancellUsernameChange}"
-                        Click="BtnShowUsernameChangeForm_Click"
-                        />
+                        Click="BtnShowUsernameChangeForm_Click" />
             </Grid>
 
             <Button x:Name="ConnectButton"
                     Margin="0 30 0 00"
                     Content="Connect"
-                    Command="{Binding ConnectToServer}"/>
+                    Command="{Binding ConnectToServer}" />
         </StackPanel>
         <Grid Grid.Row="1" Grid.Column="1" Margin="10">
             <Grid.ColumnDefinitions>
@@ -124,11 +123,11 @@
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
 
-            <Button Margin="0 0 8 0" Grid.Column="0" Content="Send" />
+            <Button Margin="0 0 8 0" Grid.Column="0" Content="Send" Command="{Binding SendMessage}" />
             <TextBox
                 x:Name="MessageInput"
                 BorderBrush="#00C000"
-                Text=""
+                Text="{Binding Message}"
                 Grid.Column="1"
                 VerticalContentAlignment="Center"
                 Background="#202020"
